@@ -1,9 +1,9 @@
 {
   "name": "readme-word-count",
-  "displayName": "Markdown Word Count",
-  "description": "Word Count for Markdown, support CJK, Emoji",
-  "version": "0.0.6",
-  "publisher": "CurlyBrackets",
+  "displayName": "Readme Word Count",
+  "description": "Adds a check for WordPress Readme.txt files for the section word counts.",
+  "version": "0.0.1",
+  "publisher": "Chris Klosowski",
   "engines": {
     "vscode": "^1.62.0"
   },
@@ -14,8 +14,8 @@
     "markdown",
     "word-count",
     "word count",
-    "cjk",
-    "emoji"
+	"readme",
+	"wordpress"
   ],
   "categories": [
     "Other"
@@ -28,42 +28,6 @@
   "repository": {
     "url": "https://github.com/cklosowski/vscode-readme-word-count.git",
     "type": "git"
-  },
-  "contributes": {
-    "configuration": {
-      "title": "Markdown Word Count",
-      "properties": {
-        "readme-word-count.selectionCount": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable count selection text"
-        },
-        "readme-word-count.statusBarCounts": {
-          "type": "object",
-          "properties": {
-            "words": {
-              "type": "boolean"
-            },
-            "lines": {
-              "type": "boolean"
-            },
-            "characters": {
-              "type": "boolean"
-            },
-            "charactersWithSpaces": {
-              "type": "boolean"
-            }
-          },
-          "default": {
-            "words": true,
-            "lines": false,
-            "characters": false,
-            "charactersWithSpaces": false
-          },
-          "description": "customize the count items shown in status bar"
-        }
-      }
-    }
   },
   "scripts": {
     "compile": "tsc -p ./",
