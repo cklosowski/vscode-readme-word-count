@@ -1,5 +1,5 @@
 {
-  "name": "markdown-word-count",
+  "name": "readme-word-count",
   "displayName": "Markdown Word Count",
   "description": "Word Count for Markdown, support CJK, Emoji",
   "version": "0.0.6",
@@ -21,23 +21,24 @@
     "Other"
   ],
   "activationEvents": [
-    "onLanguage:markdown"
+    "onLanguage:markdown",
+	"onLanguage:plaintext"
   ],
   "main": "./out/main.js",
   "repository": {
-    "url": "https://github.com/curly210102/vscode-markdown-word-count.git",
+    "url": "https://github.com/cklosowski/vscode-readme-word-count.git",
     "type": "git"
   },
   "contributes": {
     "configuration": {
       "title": "Markdown Word Count",
       "properties": {
-        "markdown-word-count.selectionCount": {
+        "readme-word-count.selectionCount": {
           "type": "boolean",
           "default": false,
           "description": "Enable count selection text"
         },
-        "markdown-word-count.statusBarCounts": {
+        "readme-word-count.statusBarCounts": {
           "type": "object",
           "properties": {
             "words": {

@@ -1,4 +1,4 @@
-# Markdown Word Count README
+# Readme Word Count README
 
 It's a powerful word count for Markdown, which supports recognize Latin, CJK, Emoji, etc.
 
@@ -23,7 +23,7 @@ By default, Words Count shown in the status bar, all counts shown in the tooltip
 
 ![Default Effect](./screenshots/tooltip.png)
 
-You can customize the status bar content by config [markdown-word-count.statusBarTemplate](#extension-settings).
+You can customize the status bar content by config [readme-word-count.statusBarTemplate](#extension-settings).
 
 ### Selection Count
 
@@ -31,17 +31,17 @@ This extension support to count selection text.
 
 ![Selection Count](./screenshots/selection.png)
 
-By default, this feature is disabled, you can enable it by config [markdown-word-count.selectionCount](#extension-settings).
+By default, this feature is disabled, you can enable it by config [readme-word-count.selectionCount](#extension-settings).
 
 ## Extension Settings
 
 This extension contributes the following settings:
 
-- `markdown-word-count.statusBarCounts`: customize the content shown in status bar.
+- `readme-word-count.statusBarCounts`: customize the content shown in status bar.
 
   ```json
   // settings.json
-  "markdown-word-count.statusBarCounts": {
+  "readme-word-count.statusBarCounts": {
       "words": true,
       "lines": false,
       "characters": false,
@@ -49,10 +49,10 @@ This extension contributes the following settings:
   }
   ```
 
-- `markdown-word-count.selectionCount`: enable/disable selection count feature.
+- `readme-word-count.selectionCount`: enable/disable selection count feature.
 
   ```json
-  "markdown-word-count.selectionCount": false
+  "readme-word-count.selectionCount": false
   ```
 
 ## Feedback and Support

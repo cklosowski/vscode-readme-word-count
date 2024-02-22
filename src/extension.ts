@@ -10,7 +10,7 @@ export function activate(context: vscode.ExtensionContext) {
   // Use the console to output diagnostic information (console.log) and errors (console.error)
   // This line of code will only be executed once when your extension is activated
   console.log(
-    'Congratulations, your extension "markdown-word-count" is now active!'
+    'Congratulations, your extension "readme-word-count" is now active!'
   );
 
   const updater = new WordCountUIUpdater();
@@ -18,21 +18,16 @@ export function activate(context: vscode.ExtensionContext) {
   updater.update();
 }
 
+
 type WordCountResultKeys = keyof IWordCountResult;
 class WordCountUIUpdater {
   private counts = [
-    "words" as const,
-    "lines" as const,
-    "characters" as const,
-    "charactersWithSpaces" as const,
+    "words" as const
   ];
-  private statusBarShownCounts: typeof this.counts[number][] = [];
-  private enableSelectionCount: boolean = false;
+  private enableSelectionCount: boolean = true;
   private statusBarItem;
   private disposable: vscode.Disposable[] = [];
-
   constructor() {
-    this.setConfiguration();
     this.statusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Left
     );
@@ -47,42 +42,33 @@ class WordCountUIUpdater {
       this,
       this.disposable
     );
-    vscode.workspace.onDidChangeConfiguration(
-      this.onConfigurationChange,
-      this,
-      this.disposable
-    );
   }
-  onConfigurationChange(e: vscode.ConfigurationChangeEvent) {
-    if (
-      e.affectsConfiguration("markdown-word-count.statusBarCounts") ||
-      e.affectsConfiguration("markdown-word-count.selectionCount")
-    ) {
-      this.setConfiguration();
-      this.update();
-    }
-  }
-  setConfiguration() {
-    const configuration = vscode.workspace.getConfiguration(
-      "markdown-word-count"
-    );
-    const shownItemsConfig =
-      configuration.get<{ [_: string]: boolean }>("statusBarCounts");
-    this.statusBarShownCounts = shownItemsConfig
-      ? this.counts.filter((count) => shownItemsConfig[count])
-      : ["words"];
-    this.enableSelectionCount =
-      configuration.get<boolean>("selectionCount") ?? false;
-  }
+
   update() {
     const editor = vscode.window.activeTextEditor;
-    if (!editor || editor.document.languageId !== "markdown") {
+    if (!editor || !editor.document) {
       this.statusBarItem.hide();
       return;
     }
+
+    const document = editor.document;
+
+    // Check if the current document is either `markdown`, `plaintext`, or the filename is `readme.txt` (case insensitive)
+    const isMarkdownOrPlaintextOrReadmeTxt = (
+      (document.languageId === "markdown" || document.languageId === "plaintext") &&
+      document.fileName.toLowerCase().endsWith("readme.txt")
+    );
+
+    if (!isMarkdownOrPlaintextOrReadmeTxt) {
+      this.statusBarItem.hide();
+      return;
+    }
+
     try {
       const docContent = editor.document.getText();
-      const markdownContent = docContent.replace(/(^\s\s*)|(\s\s*$)|/, "");
+      const lines = docContent.split("\n");
+
+	  // Handle Selection Counts.
       const selectionCount: IWordCountResult = {
         words: 0,
         lines: 0,
@@ -95,49 +81,85 @@ class WordCountUIUpdater {
           return text;
         })
         .filter((text) => !!text);
-      const showSelectionCount =
-        this.enableSelectionCount && selectionContent.length > 0;
-      if (showSelectionCount) {
-        selectionContent.forEach((text) => {
-          const countResult = count(text);
-          Object.keys(selectionCount).forEach((key) => {
-            selectionCount[key as WordCountResultKeys] +=
-              countResult[key as WordCountResultKeys] ?? 0;
-          });
-        });
+      const showSelectionCount = selectionContent.length > 0;
+	  if ( showSelectionCount ) {
+		selectionContent.forEach((text) => {
+    		const countResult = count(text);
+    		Object.keys(selectionCount).forEach((key) => {
+    		selectionCount[key as WordCountResultKeys] +=
+    			countResult[key as WordCountResultKeys] ?? 0;
+    		});
+		});
+	  }
+
+	  // Handle the section word counts.
+      let sectionCounts: { [key: string]: number } = {};
+      let currentSection = "";
+      let isInSection = false;
+      let isOverLimit = false;
+	  let firstSectionFound = false;
+
+      for (const line of lines) {
+		if ( line.startsWith("===")) {
+			// If this is the main header file, we don't want to parse it.
+			continue;
+		}
+
+		// Until we find our first section, skip the lines.
+		let isSectionHeader = line.startsWith("==");
+		if (!isSectionHeader && !firstSectionFound ) {
+			continue;
+		}
+
+		if (isSectionHeader) {
+		  isInSection = false;
+		  if ( !firstSectionFound ) {
+			firstSectionFound = true;
+		  }
+
+		  isInSection = true;
+          currentSection = line.replace(/=/g, "").trim();
+          sectionCounts[currentSection] = 0;
+		} else {
+          const countResult = count(line);
+          sectionCounts[currentSection] += countResult.words ?? 0;
+        }
       }
 
-      const fullTextCount = count(markdownContent);
+      this.statusBarItem.tooltip = '';
+	  for(const [section, count] of Object.entries(sectionCounts)) {
+		if ( count > 1500 ) {
+			isOverLimit = true;
+		}
 
-      const countText = {
-        words: `${
-          (showSelectionCount ? selectionCount.words + "／" : "") +
-          fullTextCount.words
-        } Words`,
-        lines: `${
-          (showSelectionCount ? selectionCount.lines + "／" : "") +
-          fullTextCount.lines
-        } Lines`,
-        characters: `${
-          (showSelectionCount ? selectionCount.characters + "／" : "") +
-          fullTextCount.characters
-        } Characters`,
-        charactersWithSpaces: `${
-          (showSelectionCount
-            ? selectionCount.charactersWithSpaces + "／"
-            : "") + fullTextCount.charactersWithSpaces
-        } Characters with spaces`,
-      };
+		this.statusBarItem.tooltip += `${section}: ${count} Words\n`;
+	  }
 
-      this.statusBarItem.text = `$(markdown) ${this.statusBarShownCounts
-        .map((id) => countText[id] ?? "")
-        .join(" | ")}`;
-      this.statusBarItem.tooltip = Object.values(countText).join("\n");
+	  /**
+	   * Update the status bar item with OK or Overlimit status.
+	   */
+	  let statusBarItemText = 'Readme: ';
+
+	  statusBarItemText += isOverLimit ? "Overlimit" : "OK";
+
+	  // If we are showing the selection count, then add the selection count to the status bar item.
+	  if ( showSelectionCount ) {
+		statusBarItemText += ` | Selected: ${selectionCount.words} Words`;
+	  }
+
+      this.statusBarItem.text = statusBarItemText;
+
+      // Set the status bar item background color to red if over the limit. Otherwise Green.=
+	  this.statusBarItem.backgroundColor = isOverLimit ?
+		new vscode.ThemeColor('statusBarItem.errorBackground') :
+		new vscode.ThemeColor('statusBarItem.successBackground');
+
       this.statusBarItem.show();
     } catch (e) {
       console.log(e);
     }
   }
+
   dispose() {
     this.statusBarItem.dispose();
     vscode.Disposable.from(...this.disposable).dispose();
